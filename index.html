@@ -1,449 +1,217 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Зелёный Шарик — By Miras</title>
-<style>
-  :root{
-    --bg1:#081811; --bg2:#02281a; --panel:#0f2a20; --accent:#1fa65a; --muted:#9ccfb0;
-  }
-  html,body{height:100%;margin:0;font-family:Inter, Roboto, Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:#e6f6ee}
-  .wrap{max-width:1100px;margin:12px auto;padding:12px;border-radius:12px}
-  header{display:flex;justify-content:space-between;align-items:center;gap:12px}
-  h1{margin:0;color:var(--accent);font-size:20px}
-  .lead{margin:0;color:var(--muted);font-size:13px}
-  .layout{display:grid;grid-template-columns:1fr 340px;gap:14px;margin-top:12px}
-  @media(max-width:980px){ .layout{grid-template-columns:1fr} .right{order:2} }
-  .canvas-wrap{position:relative;border-radius:12px;padding:10px;background:linear-gradient(180deg,#083726,#02311f)}
-  canvas{display:block;border-radius:8px;width:100%;height:auto}
-  .hud{position:absolute;left:12px;top:12px;display:flex;gap:8px;align-items:center}
-  .badge{background:rgba(255,255,255,0.03);padding:8px 10px;border-radius:10px;font-size:13px;color:var(--muted)}
-  .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:auto}
-  .panel{background:linear-gradient(180deg,rgba(0,0,0,0.35),rgba(0,0,0,0.45));padding:16px;border-radius:12px;text-align:center;min-width:260px}
-  .controls{display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap}
-  .btn{background:var(--accent);border:none;padding:8px 12px;border-radius:10px;color:#04281f;font-weight:700;cursor:pointer}
-  .right{padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;height:100%}
-  .shop-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-  .skin-card{background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.02);display:flex;flex-direction:column;align-items:center}
-  .skin-thumb{width:64px;height:64px;border-radius:50%;margin-bottom:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px}
-  .small{font-size:12px;color:var(--muted)}
-  .big{font-weight:800;color:#eaffef}
-  .mobile-controls{display:none;position:fixed;left:0;right:0;bottom:12px;padding:8px;pointer-events:none;justify-content:center}
-  .mobile-controls .ctrl{pointer-events:auto;margin:0 6px;padding:12px 18px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.02);color:var(--muted);font-weight:700}
-  @media(max-width:720px){ .mobile-controls{display:flex} .right{display:none} }
-  footer{margin-top:10px;text-align:center;color:var(--muted);font-size:12px}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Green Ball Jump — Игра</title>
+  <style>
+    :root{--bg:#06130a;--panel:#0f281f;--accent:#2ad27a;--muted:#8fbca3;}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, Arial, sans-serif;background:linear-gradient(180deg,var(--bg),#02220f);color:#e6fff2}
+    .wrap{display:flex;flex-direction:column;gap:12px;align-items:center;padding:14px}
+    header{width:100%;max-width:900px;display:flex;justify-content:space-between;align-items:center}
+    h1{margin:0;font-size:18px;color:var(--accent)}
+    .hud{display:flex;gap:10px;align-items:center}
+    .btn{background:var(--panel);border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
+    .btn:active{transform:translateY(1px)}
+    canvas{background:linear-gradient(180deg,#0b2a19,#052015);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.6);max-width:100%;width:900px;height:500px}
+    .controls{display:flex;gap:8px;align-items:center}
+    .info{font-size:14px;color:var(--muted)}
+    .bottom-row{display:flex;gap:10px;align-items:center;width:100%;max-width:900px;justify-content:space-between}
+    /* shop modal */
+    .modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.6));backdrop-filter:blur(2px);}
+    .card{background:var(--panel);border-radius:12px;padding:14px;width:320px;color:var(--muted);box-shadow:0 8px 30px rgba(0,0,0,0.6)}
+    .skin{display:flex;gap:10px;align-items:center;margin:8px 0}
+    .skin .swatch{width:48px;height:48px;border-radius:50%;border:2px solid rgba(255,255,255,0.04)}
+    .skin button{margin-left:auto}
+    .virt-btn{position:fixed;right:18px;bottom:18px;background:var(--accent);border:none;padding:18px;border-radius:50%;box-shadow:0 8px 20px rgba(0,0,0,0.5);display:none}
+    /* responsive */
+    @media (max-width:950px){canvas{width:100%;height:60vh} .virt-btn{display:block}}
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div>
-      <h1>Зелёный Шарик</h1>
-      <div class="lead">Прыгай, летай и избегай врагов — касание = проигрыш. By Miras</div>
-    </div>
-    <div style="text-align:right">
-      <div class="small">Рекорд: <span id="best">0</span></div>
-      <div class="big" id="coinsDisplay">Coins: 0</div>
-    </div>
-  </header>
-
-  <div class="layout">
-    <div class="canvas-wrap">
+  <div class="wrap">
+    <header>
+      <h1>Green Ball Jump</h1>
       <div class="hud">
-        <div id="scoreBadge" class="badge">Счёт: 0</div>
-        <div id="livesBadge" class="badge">Жизни: 1</div>
+        <div class="info">Монеты: <span id="coins">0</span></div>
+        <div class="info">Жизни: <span id="lives">1</span></div>
+        <button class="btn" id="shopBtn">Магазин</button>
       </div>
+    </header>
 
-      <canvas id="gameCanvas" width="900" height="520"></canvas>
+    <canvas id="game" width="900" height="500"></canvas>
 
-      <div class="overlay" id="startOverlay" style="background:linear-gradient(rgba(0,0,0,0.25),rgba(0,0,0,0.25))">
-        <div class="panel" id="panelInner">
-          <h2 id="panelTitle">Нажми Space или Start чтобы начать</h2>
-          <div class="controls">
-            <button id="startBtn" class="btn">Старт</button>
-            <button id="muteBtn" class="btn">Звук: Вкл</button>
-            <button id="openShopBtn" class="btn">Магазин</button>
-          </div>
-          <div class="small" style="margin-top:8px">ПК: Space — прыгнуть, ↑ — держать для полёта. Мобильные кнопки внизу.</div>
-        </div>
+    <div class="bottom-row">
+      <div class="info">Управление: пробел или тап (мобильные устройства). Монета дается за каждое прыжок.</div>
+      <div>
+        <button class="btn" id="restart">Перезапустить</button>
+        <button class="btn" id="mute">Звук: вкл</button>
       </div>
     </div>
+  </div>
 
-    <aside class="right">
-      <div class="small">Текущий скин</div>
-      <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
-        <div id="curThumb" class="skin-thumb" style="width:80px;height:80px;font-size:24px">🙂</div>
-        <div>
-          <div id="curSkinName" class="big">Default</div>
-          <div class="small">Нажми «Магазин», чтобы открыть и купить скины.</div>
-        </div>
+  <button class="virt-btn" id="tapBtn">Прыжок</button>
+
+  <!-- Shop Modal (hidden by default) -->
+  <div id="shopModal" class="modal" style="display:none">
+    <div class="card">
+      <h3 style="margin-top:0;color:var(--accent)">Магазин скинов</h3>
+      <div id="skinsList"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+        <div class="info">Выбранный: <span id="selectedSkinName">Белый</span></div>
+        <button class="btn" id="closeShop">Закрыть</button>
       </div>
-
-      <div style="margin-top:12px" class="small">Магазин скинов</div>
-      <div id="shopList" class="shop-list"></div>
-
-      <div style="margin-top:12px" class="small">Сохранение: покупки и выбранный скин хранятся в localStorage.</div>
-      <div style="margin-top:10px" class="small">Версия: 1.0 — By Miras</div>
-    </aside>
+    </div>
   </div>
-
-  <div class="mobile-controls" id="mobileControls">
-    <button class="ctrl" id="touchJump">Прыжок</button>
-    <button class="ctrl" id="touchFly">Лететь (удерживать)</button>
-    <button class="ctrl" id="touchShop">Магазин</button>
-  </div>
-
-  <footer>By Miras</footer>
-</div>
 
 <script>
-/* Single-file responsive game with shop, mobile + keyboard controls.
-   Copy -> save as .html and open. */
+// ----- Game variables -----
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let W = canvas.width, H = canvas.height;
+let gravity = 0.9;
+let groundY = H - 60;
+let running = true;
+let lives = 1;
+let coins = Number(localStorage.getItem('gg_coins')||0);
+let ownedSkins = JSON.parse(localStorage.getItem('gg_ownedSkins')||'["white"]');
+let selectedSkin = localStorage.getItem('gg_selectedSkin')||'white';
 
-(() => {
-  // --- DOM refs ---
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
-  const scoreBadge = document.getElementById('scoreBadge');
-  const livesBadge = document.getElementById('livesBadge');
-  const coinsDisplay = document.getElementById('coinsDisplay');
-  const bestEl = document.getElementById('best');
-  const startOverlay = document.getElementById('startOverlay');
-  const panelTitle = document.getElementById('panelTitle');
-  const startBtn = document.getElementById('startBtn');
-  const muteBtn = document.getElementById('muteBtn');
-  const openShopBtn = document.getElementById('openShopBtn');
-  const shopListEl = document.getElementById('shopList');
-  const curThumb = document.getElementById('curThumb');
-  const curSkinName = document.getElementById('curSkinName');
-  const mobileControls = document.getElementById('mobileControls');
-  const touchJump = document.getElementById('touchJump');
-  const touchFly = document.getElementById('touchFly');
-  const touchShop = document.getElementById('touchShop');
+// UI
+const coinsEl = document.getElementById('coins');
+const livesEl = document.getElementById('lives');
+const shopBtn = document.getElementById('shopBtn');
+const shopModal = document.getElementById('shopModal');
+const skinsList = document.getElementById('skinsList');
+const closeShop = document.getElementById('closeShop');
+const selectedSkinName = document.getElementById('selectedSkinName');
+const restartBtn = document.getElementById('restart');
+const muteBtn = document.getElementById('mute');
+const tapBtn = document.getElementById('tapBtn');
 
-  // --- persistence ---
-  const STORAGE_KEY = 'green_ball_v3';
-  let save = {};
-  try { save = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; } catch(e) { save = {}; }
-  if (!save.coins && save.coins !== 0) save.coins = 0;
-  if (!save.best && save.best !== 0) save.best = 0;
-  if (!save.owned) save.owned = { default: true };
-  if (!save.equipped) save.equipped = 'default';
-  function saveAll(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(save)); }
+let soundOn = true;
+function playBeep(){ if(!soundOn) return; try{ const o=new Audio(); o.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA='; o.play().catch(()=>{}); }catch(e){}
+}
 
-  // --- skins ---
-  const SKINS = [
-    { id:'default', name:'Default', thumb:'🙂', cost:0, color1:'#8ef29f', color2:'#0fa65a' },
-    { id:'lime',    name:'Lime',    thumb:'😄', cost:25, color1:'#c7ffdd', color2:'#1fa65a' },
-    { id:'gold',    name:'Gold',    thumb:'🤩', cost:60, color1:'#fff0a8', color2:'#f3b02a' },
-    { id:'ghost',   name:'Ghost',   thumb:'👻', cost:45, color1:'#e8f4ff', color2:'#9fbef2' },
-  ];
+// Skins definition
+const skins = [
+  {id:'white', name:'Белый', cost:0, color:'#ffffff'},
+  {id:'green', name:'Зелёный', cost:50, color:'#2ad27a'},
+  {id:'blue', name:'Синий', cost:120, color:'#3aa6ff'},
+  {id:'gold', name:'Золотой', cost:300, color:'#ffd166'}
+];
 
-  // --- canvas sizing (CSS pixels coordinates) ---
-  const DPR = window.devicePixelRatio || 1;
-  let WIDTH = 900, HEIGHT = 520;
-  function resizeCanvas(){
-    // choose CSS width limited by container / viewport
-    const maxW = Math.min(window.innerWidth - 24, 1100);
-    const cssW = Math.max(320, maxW);
-    const cssH = Math.max(320, Math.min(window.innerHeight - 180, HEIGHT));
-    // set CSS size
-    canvas.style.width = cssW + 'px';
-    canvas.style.height = cssH + 'px';
-    // set internal resolution for sharpness
-    canvas.width = Math.round(cssW * DPR);
-    canvas.height = Math.round(cssH * DPR);
-    // set transform so drawing uses CSS pixels
-    ctx.setTransform(DPR,0,0,DPR,0,0);
-    WIDTH = cssW;
-    HEIGHT = cssH;
-  }
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
+function saveState(){ localStorage.setItem('gg_coins', String(coins)); localStorage.setItem('gg_ownedSkins', JSON.stringify(ownedSkins)); localStorage.setItem('gg_selectedSkin', selectedSkin);} 
 
-  // --- game state ---
-  let player = { x: 140, y: HEIGHT/2, r: 26, vy:0, gravity:0.9, jumpPower:-13, thrust:-0.38, flying:false, alive:true };
-  let enemies = [];
-  let spawnTimer = 0;
-  let spawnInterval = 900; // ms
-  let score = 0;
-  let best = save.best || 0;
-  let running = false;
-  let gameOver = false;
-  let mute = false;
-  let coinsEarnedThisRun = 0;
+function updateHUD(){ coinsEl.textContent = coins; livesEl.textContent = lives; selectedSkinName.textContent = skins.find(s=>s.id===selectedSkin)?.name||'Белый'; }
 
-  // HUD init
-  function updateHUD(){ scoreBadge.innerText = 'Счёт: ' + score; coinsDisplay.innerText = 'Coins: ' + save.coins; bestEl.innerText = best; livesBadge.innerText = 'Жизни: 1'; }
-  updateHUD();
+// ----- Player -----
+const player = { x:120, y:groundY - 24, r:20, vy:0, onGround:true, alive:true };
 
-  // --- sounds ---
-  function beep(freq, dur){
-    if(mute) return;
-    try{
-      const A = window.AudioContext || window.webkitAudioContext;
-      const ctxAudio = new A();
-      const osc = ctxAudio.createOscillator();
-      const gain = ctxAudio.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = freq;
-      osc.connect(gain);
-      gain.connect(ctxAudio.destination);
-      gain.gain.setValueAtTime(0.0001, ctxAudio.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.08, ctxAudio.currentTime + 0.01);
-      osc.start();
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctxAudio.currentTime + dur/1000);
-      osc.stop(ctxAudio.currentTime + dur/1000 + 0.02);
-      setTimeout(()=>{ try{ ctxAudio.close(); }catch(e){} }, dur+50);
-    }catch(e){}
-  }
+function resetGame(){ player.x=120; player.y=groundY-24; player.vy=0; player.onGround=true; player.alive=true; lives=1; obstacles=[]; score=0; running=true; updateHUD(); }
 
-  // --- collisions ---
-  function circleRectColl(cx, cy, cr, rx, ry, rw, rh){
-    const closestX = Math.max(rx, Math.min(cx, rx+rw));
-    const closestY = Math.max(ry, Math.min(cy, ry+rh));
-    const dx = cx - closestX, dy = cy - closestY;
-    return (dx*dx + dy*dy) < cr*cr;
-  }
+// ----- Obstacles -----
+let obstacles = [];
+let obstacleTimer = 0;
+let obstacleInterval = 120; // frames
+let score = 0;
 
-  // --- spawn enemies ---
-  function spawnEnemy(){
-    const w = 36 + Math.random()*36;
-    const h = w;
-    const y = 60 + Math.random()*(HEIGHT - 160);
-    const speed = 3 + Math.random()*2 + Math.min(score/150, 4);
-    enemies.push({ x: WIDTH + 40 + Math.random()*180, y, w, h, speed });
-  }
+function spawnObstacle(){ const h = 30 + Math.random()*60; const w = 20 + Math.random()*50; obstacles.push({x:W + 40, y:groundY - h, w:w, h:h, speed:4 + Math.random()*2}); }
 
-  // --- shop UI ---
-  function renderShopList(){
-    shopListEl.innerHTML = '';
-    SKINS.forEach(s => {
-      const card = document.createElement('div'); card.className = 'skin-card';
-      const thumb = document.createElement('div'); thumb.className = 'skin-thumb'; thumb.innerText = s.thumb;
-      thumb.style.background = 'linear-gradient(180deg,'+s.color1+','+s.color2+')';
-      const name = document.createElement('div'); name.className='small'; name.innerText = s.name;
-      const cost = document.createElement('div'); cost.className='small'; cost.innerText = s.cost>0?('Цена: '+s.cost+'c'):'Бесплатно';
-      const btn = document.createElement('button'); btn.className='btn'; btn.style.marginTop='8px';
+// ----- Controls -----
+function jump(){ if(!player.alive) return; if(player.vy < -2) return; // small limit to avoid multi-jump exploit
+ player.vy = -14; player.onGround=false; coins += 1; saveState(); updateHUD(); playBeep(); }
 
-      const owned = !!save.owned[s.id];
-      if(save.equipped === s.id){ btn.innerText = 'Надето'; btn.disabled = true; }
-      else if(owned){ btn.innerText = 'Надеть'; btn.onclick = ()=>{ save.equipped = s.id; saveAll(); updateSkinUI(); renderShopList(); beep(700,80); } }
-      else { btn.innerText = 'Купить'; btn.onclick = ()=>{ if(save.coins >= s.cost){ save.coins -= s.cost; save.owned[s.id] = true; save.equipped = s.id; saveAll(); updateHUD(); renderShopList(); updateSkinUI(); beep(900,100); } else { alert('Не хватает монет'); } } }
+document.addEventListener('keydown', e=>{ if(e.code==='Space'){ e.preventDefault(); jump(); } });
+canvas.addEventListener('touchstart', e=>{ e.preventDefault(); jump(); });
+canvas.addEventListener('mousedown', e=>{ jump(); });
+tapBtn.addEventListener('click', ()=> jump());
 
-      card.appendChild(thumb); card.appendChild(name); card.appendChild(cost); card.appendChild(btn);
-      shopListEl.appendChild(card);
-    });
-  }
+// ----- Collision -----
+function circleRectCollision(cx,cy,r, rx,ry,rw,rh){ // approximate
+  const closestX = Math.max(rx, Math.min(cx, rx+rw));
+  const closestY = Math.max(ry, Math.min(cy, ry+rh));
+  const dx = cx - closestX; const dy = cy - closestY;
+  return (dx*dx + dy*dy) <= r*r;
+}
 
-  function updateSkinUI(){
-    const s = SKINS.find(x=>x.id===save.equipped) || SKINS[0];
-    curThumb.innerText = s.thumb;
-    curThumb.style.background = 'linear-gradient(180deg,'+s.color1+','+s.color2+')';
-    curSkinName.innerText = s.name;
-  }
-  updateSkinUI();
-  renderShopList();
+// ----- Game loop -----
+function update(){ if(!running) return; if(!player.alive) return;
+  // spawn obstacles
+  obstacleTimer++; if(obstacleTimer>obstacleInterval){ obstacleTimer=0; spawnObstacle(); obstacleInterval = 80 + Math.floor(Math.random()*140); }
 
-  // --- controls ---
-  const keys = {};
-  window.addEventListener('keydown', e => {
-    if(e.code === 'Space'){ e.preventDefault(); if(!running) startGame(); doJump(); }
-    if(e.code === 'ArrowUp') player.flying = true;
-    keys[e.code] = true;
-  });
-  window.addEventListener('keyup', e => {
-    if(e.code === 'ArrowUp') player.flying = false;
-    keys[e.code] = false;
-  });
+  // physics
+  player.vy += gravity; player.y += player.vy;
+  if(player.y + player.r > groundY){ player.y = groundY - player.r; player.vy = 0; player.onGround = true; }
 
-  // mobile buttons
-  touchJump.addEventListener('touchstart', (e)=>{ e.preventDefault(); if(!running) startGame(); doJump(); });
-  touchFly.addEventListener('touchstart', (e)=>{ e.preventDefault(); player.flying = true; });
-  touchFly.addEventListener('touchend', (e)=>{ e.preventDefault(); player.flying = false; });
-  touchShop.addEventListener('click', ()=>{ openShop(); });
+  // fall death
+  if(player.y - player.r > H){ die('Падение'); }
 
-  // UI buttons
-  startBtn.addEventListener('click', ()=>{ startGame(); doJump(); });
-  muteBtn.addEventListener('click', ()=>{ mute = !mute; muteBtn.innerText = 'Звук: ' + (mute? 'Выкл' : 'Вкл'); });
-  openShopBtn.addEventListener('click', openShop);
-
-  // jump
-  function doJump(){ if(!player.alive) return; player.vy = player.jumpPower; beep(880,40); }
-
-  // start/open shop
-  function startGame(){
-    running = true;
-    gameOver = false;
-    player.x = 120; player.y = HEIGHT/2; player.vy = 0; player.alive = true; enemies = [];
-    score = 0; coinsEarnedThisRun = 0; spawnTimer = 0;
-    startOverlay.style.display = 'none';
-    panelTitle.innerText = '';
-    updateHUD();
-  }
-  function openShop(){
-    // show overlay but not pause game; we will show shop in right panel (already visible on desktop)
-    startOverlay.style.display = 'flex';
-    panelTitle.innerText = 'Магазин: покупай скины справа';
-    renderShopList();
-  }
-
-  // --- update/draw ---
-  let lastTime = 0;
-  function update(dt){
-    if(!running) return;
-    if(!player.alive) return;
-
-    // physics (scale with dt where 16.67ms = 1 frame)
-    const f = dt / 16.6667;
-    if(player.flying) player.vy += player.thrust * f;
-    else player.vy += player.gravity * f;
-    player.y += player.vy * f;
-
-    // bounds
-    if(player.y + player.r > HEIGHT){ player.y = HEIGHT - player.r; player.vy = 0; /* could set gameOver here if desired */ }
-    if(player.y - player.r < 0){ player.y = player.r; player.vy = 0; }
-
-    // spawn
-    spawnTimer += dt;
-    const interval = Math.max(560, 900 - Math.min(score*6, 400)); // speeds up with score
-    if(spawnTimer > interval){ spawnEnemy(); spawnTimer = 0; }
-
-    // update enemies
-    for(let i = enemies.length - 1; i >= 0; i--){
-      const e = enemies[i];
-      e.x -= e.speed * (dt / 16.6667);
-      // collision
-      if(circleRectColl(player.x, player.y, player.r, e.x, e.y, e.w, e.h)){
-        // hit
-        player.alive = false;
-        running = false;
-        gameOver = true;
-        panelTitle.innerText = 'Ты проиграл — Нажми Старт, чтобы попробовать снова';
-        startOverlay.style.display = 'flex';
-        // reward: small coins for run
-        save.coins += Math.floor(coinsEarnedThisRun/1); // we already gave coins on pass; this is backup
-        if(score > best){ best = score; save.best = best; }
-        saveAll();
-        updateHUD();
-        beep(140,200);
-        break;
-      }
-      // passed offscreen
-      if(e.x + e.w < -40){
-        enemies.splice(i,1);
-        score++;
-        coinsEarnedThisRun++;
-        // reward immediate coin on pass
-        save.coins += 1;
-        updateHUD();
-      }
+  // move obstacles
+  for(let i=obstacles.length-1;i>=0;i--){ const o=obstacles[i]; o.x -= o.speed; if(o.x + o.w < -50) obstacles.splice(i,1); else{
+      if(circleRectCollision(player.x, player.y, player.r, o.x, o.y, o.w, o.h)){ die('Столкновение'); }
     }
   }
+}
 
-  function draw(){
-    // clear (CSS pixels)
-    ctx.clearRect(0,0,WIDTH,HEIGHT);
-    // background
-    const g = ctx.createLinearGradient(0,0,0,HEIGHT);
-    g.addColorStop(0,'#083726'); g.addColorStop(1,'#02311f');
-    ctx.fillStyle = g; ctx.fillRect(0,0,WIDTH,HEIGHT);
-    // ground
-    ctx.fillStyle = '#042d1f'; ctx.fillRect(0, HEIGHT-84, WIDTH, 84);
+function die(reason){ if(!player.alive) return; player.alive=false; lives = Math.max(0, lives-1); updateHUD(); playBeep(); running=false; showDeath(reason); saveState(); }
 
-    // draw enemies
-    enemies.forEach(e => {
-      ctx.save();
-      ctx.translate(e.x + e.w/2, e.y + e.h/2);
-      ctx.rotate(Math.sin(e.x/20)*0.18);
-      ctx.translate(-e.x - e.w/2, -e.y - e.h/2);
-      ctx.fillStyle = '#b33b3b';
-      ctx.fillRect(e.x, e.y, e.w, e.h);
-      // spikes
-      ctx.fillStyle = '#7a1f1f';
-      for(let s=0;s<4;s++){
-        ctx.beginPath();
-        ctx.moveTo(e.x + s*(e.w/4), e.y);
-        ctx.lineTo(e.x + s*(e.w/4) + e.w/8, e.y-12);
-        ctx.lineTo(e.x + (s+1)*(e.w/4), e.y);
-        ctx.fill();
-      }
-      ctx.restore();
-    });
+function showDeath(reason){ // overlay
+  ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='white'; ctx.font='28px Arial'; ctx.textAlign='center'; ctx.fillText('Вы умерли — '+reason, W/2, H/2 - 10);
+  ctx.font='16px Arial'; ctx.fillText('Нажмите «Перезапустить» чтобы начать заново', W/2, H/2 + 20);
+}
 
-    // draw player with current skin
-    const skin = SKINS.find(s => s.id === save.equipped) || SKINS[0];
-    const grd = ctx.createRadialGradient(player.x-8,player.y-8,6, player.x,player.y, player.r+8);
-    grd.addColorStop(0, skin.color1); grd.addColorStop(1, skin.color2);
-    ctx.fillStyle = grd;
-    ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI*2); ctx.fill();
-    // eyes
-    ctx.fillStyle = '#04281f';
-    ctx.beginPath(); ctx.arc(player.x-8, player.y-6, 3.8, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(player.x+6, player.y-6, 3.8, 0, Math.PI*2); ctx.fill();
-    // smile
-    ctx.strokeStyle = '#04281f'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(player.x, player.y+2, 10, 0.15*Math.PI, 0.85*Math.PI); ctx.stroke();
+function draw(){ // clear
+  ctx.clearRect(0,0,W,H);
+  // ground
+  ctx.fillStyle='#08321f'; ctx.fillRect(0,groundY, W, H-groundY);
 
-    // optional: score text in canvas
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.font = '12px Arial';
-    ctx.fillText('By Miras', 10, HEIGHT-10);
+  // player
+  const skin = skins.find(s=>s.id===selectedSkin) || skins[0];
+  ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI*2); ctx.closePath();
+  ctx.fillStyle = skin.color; ctx.fill();
+  // outline
+  ctx.lineWidth=2; ctx.strokeStyle='rgba(0,0,0,0.25)'; ctx.stroke();
+
+  // obstacles
+  for(const o of obstacles){ ctx.fillStyle='#6e2f2f'; ctx.fillRect(o.x, o.y, o.w, o.h); ctx.strokeStyle='rgba(0,0,0,0.2)'; ctx.strokeRect(o.x,o.y,o.w,o.h); }
+
+  // score / tip
+  ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.fillRect(W-170,12,156,42);
+  ctx.fillStyle='var(--accent)'; ctx.font='14px Arial'; ctx.textAlign='left'; ctx.fillText('Прыжков: '+score, W-160, 34);
+}
+
+// main loop
+function loop(){ update(); draw(); if(running && player.alive){ requestAnimationFrame(loop); } }
+
+// restart
+restartBtn.addEventListener('click', ()=>{ resetGame(); loop(); });
+
+// shop
+shopBtn.addEventListener('click', ()=>{ renderShop(); shopModal.style.display='flex'; }); closeShop.addEventListener('click', ()=>{ shopModal.style.display='none'; });
+
+function renderShop(){ skinsList.innerHTML=''; for(const s of skins){ const div = document.createElement('div'); div.className='skin'; const sw = document.createElement('div'); sw.className='swatch'; sw.style.background = s.color; div.appendChild(sw);
+    const name = document.createElement('div'); name.innerHTML = `<strong>${s.name}</strong><div style="font-size:12px;color:var(--muted)">${s.cost>0?s.cost+' монет':''}</div>`; div.appendChild(name);
+    const btn = document.createElement('button'); btn.className='btn'; if(ownedSkins.includes(s.id)){ btn.textContent = s.id===selectedSkin? 'Выбрано':'Выбрать'; btn.onclick = ()=>{ selectedSkin = s.id; saveState(); updateHUD(); renderShop(); }; } else { btn.textContent = 'Купить'; btn.onclick = ()=>{ if(coins>=s.cost){ coins-=s.cost; ownedSkins.push(s.id); selectedSkin = s.id; saveState(); updateHUD(); renderShop(); } else { alert('Недостаточно монет'); } } }
+    div.appendChild(btn); skinsList.appendChild(div);
   }
+}
 
-  // game loop
-  function loop(timestamp){
-    if(!lastTime) lastTime = timestamp;
-    const dt = Math.min(50, timestamp - lastTime); // cap dt to avoid big jumps
-    lastTime = timestamp;
-    update(dt);
-    draw();
-    requestAnimationFrame(loop);
-  }
+// mute
+muteBtn.addEventListener('click', ()=>{ soundOn = !soundOn; muteBtn.textContent = soundOn? 'Звук: вкл' : 'Звук: выкл'; });
 
-  // start the animation loop
-  let lastTime = 0;
-  requestAnimationFrame(loop);
+// resize handling
+window.addEventListener('resize', ()=>{
+  const rect = canvas.getBoundingClientRect(); W = canvas.width = rect.width; H = canvas.height = rect.height; groundY = H - 60; if(player.y>groundY) player.y = groundY - player.r;
+});
 
-  // initial resize and skin/HUD
-  function initialAdjust(){
-    resizeCanvas();
-    player.y = HEIGHT/2;
-    updateSkinUI();
-    updateHUD();
-    // show mobile controls on touch devices
-    if(('ontouchstart' in window) || navigator.maxTouchPoints > 0){
-      mobileControls.style.display = 'flex';
-    }
-  }
-  initialAdjust();
+// initial setup
+updateHUD(); renderShop(); loop();
 
-  // clickable shop on right (also renders)
-  renderShopList();
+// Save coins on unload
+window.addEventListener('beforeunload', ()=> saveState());
 
-  // helpers update HUD/skin UI
-  function updateHUD(){
-    scoreBadge.innerText = 'Счёт: ' + score;
-    coinsDisplay.innerText = 'Coins: ' + save.coins;
-    bestEl.innerText = save.best || best;
-    livesBadge.innerText = 'Жизни: 1';
-  }
-  function updateSkinUI(){
-    const s = SKINS.find(x=>x.id===save.equipped) || SKINS[0];
-    curThumb.innerText = s.thumb;
-    curThumb.style.background = 'linear-gradient(180deg,'+s.color1+','+s.color2+')';
-    curSkinName.innerText = s.name;
-  }
-
-  // shop button on mobile opens same overlay
-  touchShop.addEventListener('click', openShop);
-
-  // make sure to save on exit
-  window.addEventListener('beforeunload', ()=>{ saveAll(); });
-
-  // expose a small debug console on double-tap of footer (optional)
-})();
 </script>
 </body>
 </html>
